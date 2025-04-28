@@ -1,40 +1,29 @@
-// Import Express library
 const express = require('express');
-
-// Create an Express application
+const fs = require('fs');
 const app = express();
-
-// Sample leaderboard data (this can later be replaced with database or file storage)
-let leaderboard = [
-  { name: 'David', cash: 1000, bank: 0 },
-  { name: 'Mira', cash: 750, bank: 0 },
-  { name: 'Vojta', cash: 250, bank: 0 }
-];
-
-// A basic route
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
+const port = process.env.PORT || 3000;
 
 // API route to fetch leaderboard data
 app.get('/leaderboard', (req, res) => {
-  res.json(leaderboard);
+    // Read leaderboard.txt and send the data as JSON
+    fs.readFile('leaderboard.txt', 'utf8', (err, data) => {
+        if (err) {
+            res.status(500).send('Error reading leaderboard data');
+            return;
+        }
+
+        // Split the data into lines, then parse it into an array
+        const leaderboard = data.split('\n').map(line => {
+            const [name, cash, bank] = line.split(', ');
+            return { name, cash: parseInt(cash), bank: parseInt(bank) };
+        });
+
+        // Send the parsed data as JSON
+        res.json(leaderboard);
+    });
 });
 
-// API route to save a new leaderboard entry (for testing)
-app.post('/leaderboard', express.json(), (req, res) => {
-  const { name, cash, bank } = req.body;
-  if (!name || cash === undefined || bank === undefined) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const newPlayer = { name, cash, bank };
-  leaderboard.push(newPlayer);
-  res.status(201).json(newPlayer);
-});
-
-// Set the server to listen on port 3000
-const port = process.env.PORT || 3000;
+// Start the server
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on http://localhost:${port}`);
 });
